@@ -138,7 +138,7 @@ void Buttons::update()
     }
 }
 
-uint8_t lastBankValue = 0;
+int8_t lastBankValue = 0;
 
 ///
 /// \brief Handles changes in button states.
@@ -168,10 +168,11 @@ void Buttons::processButton(uint8_t buttonID, bool state)
             case buttonPC:
             if (buttonID == 0)
             {
-                midi.sendProgramChange(lastBankValue, 0);
-                midi.sendProgramChange(lastBankValue, 2);
                 if (lastBankValue < 127)
                     lastBankValue++;
+
+                midi.sendProgramChange(lastBankValue, 0);
+                midi.sendProgramChange(lastBankValue, 2);
             }
             else if (buttonID == 1)
             {
@@ -180,6 +181,16 @@ void Buttons::processButton(uint8_t buttonID, bool state)
 
                 midi.sendProgramChange(lastBankValue, 0);
                 midi.sendProgramChange(lastBankValue, 2);
+            }
+            else if ((buttonID >= 2) && (buttonID < 8))
+            {
+                uint16_t value = (buttonID-2)+(lastBankValue*6);
+
+                if (value > 127)
+                    value = 127;
+
+                midi.sendProgramChange(value, 1);
+                midi.sendControlChange(buttonID-2, 127, 2);
             }
             else
             {
@@ -305,6 +316,13 @@ void Buttons::processButton(uint8_t buttonID, bool state)
             #ifdef DISPLAY_SUPPORTED
             display.displayMIDIevent(displayEventOut, midiMessageMMCrecordOff_display, mmcArray[2], 0, 0);
             #endif
+            break;
+
+            case buttonPC:
+            if ((buttonID >= 2) && (buttonID < 8))
+            {
+                midi.sendControlChange(buttonID-2, 0, 2);
+            }
             break;
 
             default:
