@@ -138,6 +138,8 @@ void Buttons::update()
     }
 }
 
+uint8_t lastBankValue = 0;
+
 ///
 /// \brief Handles changes in button states.
 /// @param [in] buttonID    Button index which has changed state.
@@ -164,7 +166,25 @@ void Buttons::processButton(uint8_t buttonID, bool state)
             break;
 
             case buttonPC:
-            midi.sendProgramChange(note, channel);
+            if (buttonID == 0)
+            {
+                midi.sendProgramChange(lastBankValue, 0);
+                midi.sendProgramChange(lastBankValue, 2);
+                if (lastBankValue < 127)
+                    lastBankValue++;
+            }
+            else if (buttonID == 1)
+            {
+                if (lastBankValue > 0)
+                    lastBankValue--;
+
+                midi.sendProgramChange(lastBankValue, 0);
+                midi.sendProgramChange(lastBankValue, 2);
+            }
+            else
+            {
+                midi.sendProgramChange(note, channel);
+            }
             #ifdef DISPLAY_SUPPORTED
             display.displayMIDIevent(displayEventOut, midiMessageProgramChange_display, note, 0, channel+1);
             #endif
